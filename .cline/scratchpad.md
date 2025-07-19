@@ -40,8 +40,8 @@
 ### Phase 1: Foundation & Infrastructure (Weeks 1-4)
 
 **Backend Setup & Core API**
-- [ ] Initialize Laravel 11 project with Docker configuration
-- [ ] Set up database schema and migrations for core entities
+- [x] Initialize Laravel 11 project with Docker configuration
+- [x] Set up database schema and migrations for core entities
 - [ ] Configure Backpack CMS with custom admin panels
 - [ ] Create API endpoints for frontend consumption
 - [ ] Implement authentication system and API rate limiting
@@ -143,6 +143,13 @@ Progress: Created Dockerfile, docker-compose.yml, and nginx config
 Evidence: docker-compose.yml, backend/Dockerfile, docker/nginx/default.conf
 Next Steps: Confirm Docker setup, run tests once dependencies installed
 Updated: 2025-07-18
+Task: Set up database schema and migrations for core entities
+Status: Completed
+Progress: Created migrations and models for projects, categories, technologies, posts, tags, inquiries, and newsletter subscribers
+Evidence: backend/database/migrations/, backend/app/Models/
+Next Steps: Configure Backpack CMS admin panels for these entities
+Updated: 2025-07-19
+
 
 *This section will be populated by the executor during development with specific questions, blockers, or requests for clarification.*
 
