@@ -1,5 +1,11 @@
 FROM php:8.3-fpm
 
+# Store composer files inside the project directory
+ENV COMPOSER_HOME=/var/www/html/.composer \
+    COMPOSER_CACHE_DIR=/var/www/html/.composer/cache
+
+RUN mkdir -p "$COMPOSER_CACHE_DIR"
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
