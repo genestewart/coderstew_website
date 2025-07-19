@@ -8,7 +8,9 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-      - /mnt/user/appdata/coderstew_website/composer:/var/www/html/.composer
+      # Store composer cache in a local folder so it persists between
+      # container rebuilds without relying on an absolute host path
+      - ./composer:/var/www/html/.composer
     environment:
       APP_ENV: local
       APP_KEY: base64:someplaceholderkey
@@ -37,7 +39,8 @@ services:
     container_name: coderstew_db
     restart: unless-stopped
     volumes:
-      - /mnt/user/appdata/coderstew_website/db_data:/var/lib/mysql
+      # Persist database files in a project-local directory
+      - ./db_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: coderstew
