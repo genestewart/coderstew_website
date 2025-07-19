@@ -9,6 +9,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+      - /mnt/user/appdata/coderstew_website/composer:/var/www/html/.composer
     environment:
       APP_ENV: local
       APP_KEY: base64:someplaceholderkey
@@ -16,6 +17,8 @@ services:
       DB_DATABASE: coderstew
       DB_USERNAME: coderstew
       DB_PASSWORD: password
+      COMPOSER_HOME: /var/www/html/.composer
+      COMPOSER_CACHE_DIR: /var/www/html/.composer/cache
     ports:
       - "9000:9000"
 
@@ -35,7 +38,7 @@ services:
     container_name: coderstew_db
     restart: unless-stopped
     volumes:
-      - db_data:/var/lib/mysql
+      - /mnt/user/appdata/coderstew_website/db_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: coderstew
@@ -44,5 +47,3 @@ services:
     ports:
       - "3306:3306"
 
-volumes:
-  db_data:
