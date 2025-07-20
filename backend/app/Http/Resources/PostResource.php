@@ -8,6 +8,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PostResource extends JsonResource
 {
     /**
+     * Disable the default data wrapper.
+     *
+     * @var null
+     */
+    public static $wrap = null;
+    /**
      * Transform the resource into an array.
      */
     public function toArray($request): array
