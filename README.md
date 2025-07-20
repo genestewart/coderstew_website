@@ -5,7 +5,18 @@ This repository contains the source code for the **CoderStew** freelance web dev
 ## Development Setup
 
 1. Ensure you have [Docker](https://docs.docker.com/get-docker/) and Docker Compose installed.
-2. From the repository root, start the containers:
+2. Navigate to the `backend/` directory and install dependencies:
+
+```bash
+cd backend
+composer install
+npm install # if Node packages are needed
+
+# Run backend tests from this directory
+composer test
+```
+
+3. From the repository root, start the containers:
 
 ```bash
 docker compose up -d
