@@ -2,3 +2,5 @@
 !/db_data/.gitkeep
 /composer/*
 !/composer/.gitkeep
+
+/tests/__pycache__/
