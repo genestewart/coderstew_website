@@ -16,7 +16,7 @@ class PostApiTest extends TestCase
 
         $response = $this->getJson('/api/posts');
 
-        $response->assertStatus(200)->assertJsonCount(3);
+        $response->assertStatus(200)->assertJsonCount(3, 'data');
     }
 
     public function test_post_show()

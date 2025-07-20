@@ -16,7 +16,7 @@ class ProjectApiTest extends TestCase
 
         $response = $this->getJson('/api/projects');
 
-        $response->assertStatus(200)->assertJsonCount(2);
+        $response->assertStatus(200)->assertJsonCount(2, 'data');
     }
 
     public function test_project_show()
