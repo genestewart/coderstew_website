@@ -1,18 +1,14 @@
 <template>
-  <div class="p-4">
-    <nav class="mb-4 space-x-4">
-      <RouterLink to="/">Home</RouterLink>
-      <RouterLink to="/about">About</RouterLink>
-    </nav>
-    <RouterView />
-  </div>
+  <MainLayout />
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { RouterLink, RouterView } from 'vue-router';
+import MainLayout from './layouts/MainLayout.vue';
 
 export default defineComponent({
   name: 'App',
+  components: { MainLayout },
 });
 </script>
+
