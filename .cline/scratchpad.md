@@ -179,8 +179,6 @@
 **Immediate Priorities (Next 1-2 weeks):**
 - [OUTDATED - Completed] Review and approve tasks 6-10 currently under review
 - Begin Task 11: API service layer implementation
-- Finalize Phase 1 infrastructure setup (Tasks 12-15)
-- Begin Phase 2 portfolio system (Task 16)
 
 **Current Blockers:** None
 
