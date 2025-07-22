@@ -23,6 +23,13 @@
             Home
           </RouterLink>
           <RouterLink
+            to="/portfolio"
+            class="px-2 py-1 md:ml-4 hover:text-sunburst-500"
+            @click="menuOpen = false"
+          >
+            Portfolio
+          </RouterLink>
+          <RouterLink
             to="/about"
             class="px-2 py-1 md:ml-4 hover:text-sunburst-500"
             @click="menuOpen = false"

@@ -1,0 +1,158 @@
+# Traefik Dynamic Configuration - SSL and Security Rules
+# Handles middleware, service discovery, and routing rules
+
+http:
+  middlewares:
+    # Security headers
+    security-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Requested-With"
+        accessControlAllowOriginList:
+          - "https://coderstew.com"
+          - "https://www.coderstew.com"
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+          X-XSS-Protection: "1; mode=block"
+          X-Content-Type-Options: "nosniff"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+
+    # Rate limiting
+    rate-limit:
+      rateLimit:
+        average: 100
+        period: 1m
+        burst: 50
+
+    # API specific rate limiting
+    api-rate-limit:
+      rateLimit:
+        average: 60
+        period: 1m
+        burst: 20
+
+    # Compression
+    gzip-compress:
+      compress: {}
+
+    # Redirect www to non-www
+    redirect-www:
+      redirectRegex:
+        regex: "^https://www\\.(.*)"
+        replacement: "https://${1}"
+        permanent: true
+
+  routers:
+    # Main website router
+    coderstew-web:
+      rule: "Host(`coderstew.com`, `www.coderstew.com`)"
+      service: coderstew-web
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "coderstew.com"
+            sans:
+              - "www.coderstew.com"
+      middlewares:
+        - redirect-www
+        - security-headers
+        - rate-limit
+        - gzip-compress
+
+    # API router with separate rate limiting
+    coderstew-api:
+      rule: "Host(`coderstew.com`, `www.coderstew.com`) && PathPrefix(`/api`)"
+      service: coderstew-web
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - redirect-www
+        - security-headers
+        - api-rate-limit
+        - gzip-compress
+
+    # Admin panel router (Backpack CMS)
+    coderstew-admin:
+      rule: "Host(`coderstew.com`, `www.coderstew.com`) && PathPrefix(`/admin`)"
+      service: coderstew-web
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - redirect-www
+        - security-headers
+        - gzip-compress
+
+    # Traefik dashboard (secured)
+    traefik-dashboard:
+      rule: "Host(`traefik.coderstew.com`)"
+      service: api@internal
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+
+  services:
+    coderstew-web:
+      loadBalancer:
+        servers:
+          - url: "http://web:80"
+        healthCheck:
+          path: "/health"
+          interval: "30s"
+          timeout: "10s"
+          retries: 3
+        sticky:
+          cookie:
+            name: "coderstew_session"
+            secure: true
+            httpOnly: true
+
+# TCP services for non-HTTP traffic if needed
+tcp:
+  routers: {}
+  services: {}
+
+# TLS configuration
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/traefik/certs/default.crt
+        keyFile: /etc/traefik/certs/default.key
+  
+  options:
+    default:
+      sslVersions:
+        - "TLSv1.2"
+        - "TLSv1.3"
+      cipherSuites:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA"
+        - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+      curvePreferences:
+        - "CurveP521"
+        - "CurveP384"
+      minVersion: "VersionTLS12"

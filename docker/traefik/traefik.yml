@@ -1,0 +1,76 @@
+# Traefik v3.0 Configuration - Production Setup for CoderStew Website
+# Handles reverse proxy, SSL termination, and automatic certificate management
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        options: default
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: coderstew_network
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      tlsChallenge: {}
+      email: admin@coderstew.com
+      storage: /etc/traefik/certs/acme.json
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+      # Uncomment for testing
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log
+  format: json
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+
+# Security options
+tls:
+  options:
+    default:
+      sslVersions:
+        - "TLSv1.2"
+        - "TLSv1.3"
+      cipherSuites:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+      minVersion: "VersionTLS12"
+      maxVersion: "VersionTLS13"

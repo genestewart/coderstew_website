@@ -1,0 +1,76 @@
+# Prometheus Configuration for CoderStew Website Monitoring
+# Scrapes metrics from application and infrastructure components
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'coderstew-monitor'
+
+rule_files:
+  # - "rules/*.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Traefik metrics
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Node exporter (if available)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+    scrape_interval: 30s
+
+  # MySQL exporter (if configured)
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+    scrape_interval: 30s
+
+  # Redis exporter (if configured)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # Nginx exporter (if configured)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 30s
+
+  # Laravel application metrics (if implemented)
+  - job_name: 'laravel'
+    static_configs:
+      - targets: ['web:80']
+    metrics_path: /metrics
+    scrape_interval: 60s
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus
+    retention.time: 30d
+    retention.size: 10GB
+
+# Remote write configuration (optional)
+# remote_write:
+#   - url: "https://prometheus-remote-write-endpoint"
+#     basic_auth:
+#       username: "user"
+#       password: "pass"

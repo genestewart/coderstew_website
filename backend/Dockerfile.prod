@@ -1,0 +1,150 @@
+# Production Dockerfile - Multi-stage build for CoderStew Website
+# Stage 1: Builder - Install dependencies and build assets
+FROM php:8.3-fpm as builder
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    unzip \
+    libpng-dev \
+    libjpeg-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    curl \
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy composer files and install dependencies
+COPY backend/composer.json backend/composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-cache
+
+# Copy application source
+COPY backend/ .
+
+# Set proper permissions and optimize Laravel
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 777 /var/www/html/storage \
+    && chmod -R 777 /var/www/html/bootstrap/cache \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
+
+# Stage 2: Node.js build for frontend assets
+FROM node:20-alpine as node-builder
+
+WORKDIR /var/www/html
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Install node dependencies
+RUN npm ci --omit=dev
+
+# Copy source files needed for build
+COPY backend/ .
+COPY --from=builder /var/www/html/vendor ./vendor
+
+# Build production assets
+RUN npm run build
+
+# Stage 3: Production runtime
+FROM php:8.3-fpm-alpine as production
+
+# Install runtime dependencies and build tools temporarily
+RUN apk add --no-cache --virtual .build-deps \
+        zlib-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        icu-dev \
+        mysql-dev \
+    && apk add --no-cache \
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        libzip \
+        icu \
+        mysql-client \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        intl \
+        opcache \
+    && apk del .build-deps
+
+# Install production PHP configuration
+COPY docker/php/production/php.ini /usr/local/etc/php/conf.d/99-production.ini
+COPY docker/php/production/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Create non-root user for security
+RUN addgroup -g 1000 -S www && \
+    adduser -u 1000 -D -S -G www www
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application from builder stage
+COPY --from=builder --chown=www:www /var/www/html .
+
+# Copy built frontend assets from node builder
+COPY --from=node-builder --chown=www:www /var/www/html/public/build ./public/build
+
+# Remove unnecessary files for production
+RUN rm -rf \
+    tests \
+    node_modules \
+    package*.json \
+    vite.config.js \
+    tsconfig.json \
+    .env.example \
+    README.md \
+    .git* \
+    docker \
+    docs
+
+# Set proper permissions
+RUN chown -R www:www /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 777 /var/www/html/storage \
+    && chmod -R 777 /var/www/html/bootstrap/cache
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD php-fpm-healthcheck || exit 1
+
+# Copy health check script
+COPY docker/php/healthcheck.sh /usr/local/bin/php-fpm-healthcheck
+RUN chmod +x /usr/local/bin/php-fpm-healthcheck
+
+# Switch to non-root user
+USER www
+
+# Expose port
+EXPOSE 9000
+
+# Start PHP-FPM
+CMD ["php-fpm", "--nodaemonize"]

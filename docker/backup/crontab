@@ -1,0 +1,11 @@
+# CoderStew Website Backup Crontab
+# This file will be replaced by entrypoint.sh with dynamic schedule
+
+# Daily backup at 2 AM UTC
+0 2 * * * /usr/local/bin/backup.sh backup >> /var/log/backup/backup.log 2>&1
+
+# Weekly health check on Sundays at 1 AM UTC  
+0 1 * * 0 /usr/local/bin/backup.sh health >> /var/log/backup/backup.log 2>&1
+
+# Monthly cleanup on the 1st at 3 AM UTC
+0 3 1 * * /usr/local/bin/backup.sh cleanup >> /var/log/backup/backup.log 2>&1
